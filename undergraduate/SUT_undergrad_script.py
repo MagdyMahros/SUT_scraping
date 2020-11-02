@@ -15,7 +15,7 @@ import bs4 as bs4
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import os
 import copy
 from CustomMethods import TemplateData
@@ -238,5 +238,79 @@ for each_url in course_links_file:
                     course_data['Prerequisite_1'] = 'year 12'
                     course_data['Prerequisite_1_grade'] = atar_text
                     print('ATAR: ', course_data['Prerequisite_1_grade'])
+
+    # FEES
+    # for local
+    fees_div = soup.find('div', id='fees')
+    if fees_div:
+        fees_table = fees_div.find('table', class_='table table--blocked-th')
+        if fees_table:
+            t_body = fees_table.find('tbody')
+            if t_body:
+                tr = t_body.find('tr')
+                if tr:
+                    elements = tr.find_all('td')
+                    if elements:
+                        if len(elements) == 4:
+                            for index, element in enumerate(elements):
+                                if index == 2:
+                                    d_fee = element.get_text().strip().replace('$', '')
+                                    course_data['Local_Fees'] = d_fee
+                                    print('LOCAL FEE: ', course_data['Local_Fees'])
+    # for international
+    # navigate to international tab
+    if soup.find('a', id='tab-international'):
+        try:
+            browser.execute_script("arguments[0].click();", WebDriverWait(browser, 5).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="tab-international"]'))))
+        except TimeoutException:
+            pass
+        time.sleep(2)
+        # grab the data
+        try:
+            fee = browser.find_element_by_xpath('//*[@id="content"]/main/section[1]/div/div[2]/div[3]/p')
+        except NoSuchElementException:
+            fee = None
+            pass
+        if fee:
+            fee_text = fee.text
+            fee_n = re.search(r"\d+(?:,\d+)|\d+", fee_text.__str__())
+            if fee_n:
+                fee_number = fee_n.group()
+                course_data['Int_Fees'] = fee_number
+                print('INTERNATIONAL FEE: ', course_data['Int_Fees'])
+
+    course_data['Remarks'] = remarks_list
+    del remarks_list
+
+    # duplicating entries with multiple cities for each city
+    for i in actual_cities:
+        course_data['City'] = possible_cities[i]
+        course_data_all.append(copy.deepcopy(course_data))
+    del actual_cities
+
+    # TABULATE THE DATA
+    desired_order_list = ['Level_Code', 'University', 'City', 'Course', 'Faculty', 'Int_Fees', 'Local_Fees',
+                          'Currency', 'Currency_Time', 'Duration', 'Duration_Time', 'Full_Time', 'Part_Time',
+                          'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',
+                          'Prerequisite_2_grade', 'Prerequisite_3_grade', 'Website', 'Course_Lang', 'Availability',
+                          'Description', 'Career_Outcomes', 'Country', 'Online', 'Offline', 'Distance', 'Face_to_Face',
+                          'Blended', 'Remarks']
+
+    course_dict_keys = set().union(*(d.keys() for d in course_data_all))
+
+    with open(csv_file, 'w', encoding='utf-8', newline='') as output_file:
+        dict_writer = csv.DictWriter(output_file, course_dict_keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(course_data_all)
+
+    with open(csv_file, 'r', encoding='utf-8') as infile, open('SUT_undergrad_ordered.csv', 'w', encoding='utf-8',
+                                                               newline='') as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=desired_order_list)
+        # reorder the header first
+        writer.writeheader()
+        for row in csv.DictReader(infile):
+            # writes the reordered rows to the new file
+            writer.writerow(row)
 
 
