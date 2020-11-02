@@ -48,7 +48,8 @@ course_data = {'Level_Code': '', 'University': 'Swinburne University of Technolo
 possible_cities = {'rockhampton': 'Rockhampton', 'cairns': 'Cairns', 'bundaberg': 'Bundaberg', 'townsville': 'Townsville',
                    'online': 'Online', 'gladstone': 'Gladstone', 'mackay': 'Mackay', 'mixed': 'Online', 'yeppoon': 'Yeppoon',
                    'brisbane': 'Brisbane', 'sydney': 'Sydney', 'queensland': 'Queensland', 'melbourne': 'Melbourne',
-                   'albany': 'Albany', 'perth': 'Perth', 'adelaide': 'Adelaide', 'noosa': 'Noosa', 'emerald': 'Emerald'}
+                   'albany': 'Albany', 'perth': 'Perth', 'adelaide': 'Adelaide', 'noosa': 'Noosa', 'emerald': 'Emerald',
+                   'hawthorn': 'Hawthorn', 'wantirna': 'Wantirna', 'prahran': 'Prahran'}
 
 possible_languages = {'Japanese': 'Japanese', 'French': 'French', 'Italian': 'Italian', 'Korean': 'Korean',
                       'Indonesian': 'Indonesian', 'Chinese': 'Chinese', 'Spanish': 'Spanish'}
@@ -206,7 +207,20 @@ for each_url in course_links_file:
                 course_data['Career_Outcomes'] = career_list
                 print('CAREER OUTCOMES: ', course_data['Career_Outcomes'])
 
-
-
+    # CITY
+    location = soup.find('span', class_='course-location')
+    if location:
+        location_text = location.get_text().lower().strip()
+        if 'hawthorn' in location_text:
+            actual_cities.append('hawthorn')
+        if 'wantirna' in location_text:
+            actual_cities.append('wantirna')
+        if 'prahran' in location_text:
+            actual_cities.append('prahran')
+        if location_text == '':
+            actual_cities.append('hawthorn')
+    else:
+        actual_cities.append('online')
+    print('CITY: ', actual_cities)
 
 
