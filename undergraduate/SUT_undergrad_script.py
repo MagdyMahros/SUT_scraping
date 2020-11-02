@@ -169,6 +169,17 @@ for each_url in course_links_file:
               course_data['Face_to_Face'] + ' blended: ' + course_data['Blended'] + ' distance: ' +
               course_data['Distance'])
 
+    # AVAILABILITY
+    ave_local_tab = soup.find('a', id='tab-local')
+    ave_international_tab = soup.find('a', id='tab-international')
+    if ave_local_tab:
+        course_data['Availability'] = 'D'
+    if ave_international_tab:
+        course_data['Availability'] = 'I'
+    if ave_local_tab and ave_international_tab:
+        course_data['Availability'] = 'A'
+    print('AVAILABILITY: ' + course_data['Availability'])
+
 
 
 
