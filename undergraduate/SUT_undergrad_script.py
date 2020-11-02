@@ -143,5 +143,32 @@ for each_url in course_links_file:
                             course_data['Duration_Time'] = duration_list[1]
                             print('DURATION/DURATION-TIME', str(course_data['Duration']) + ' / ' + course_data['Duration_Time'])
 
+    # DELIVERY
+    delivery_tag = soup.find('h2', id='course-subtitle')
+    if delivery_tag:
+        delivery_text = delivery_tag.get_text().lower().strip()
+        if 'blended' in delivery_text:
+            course_data['Blended'] = 'yes'
+        else:
+            course_data['Blended'] = 'no'
+        if 'digital' in delivery_text:
+            course_data['Distance'] = 'yes'
+        else:
+            course_data['Distance'] = 'no'
+        if 'on-campus' in delivery_text:
+            course_data['Offline'] = 'yes'
+            course_data['Face_to_Face'] = 'yes'
+        else:
+            course_data['Offline'] = 'no'
+            course_data['Face_to_Face'] = 'no'
+        if 'oua' in delivery_text:
+            course_data['Online'] = 'yes'
+        else:
+            course_data['Online'] = 'no'
+        print('DELIVERY: online: ' + course_data['Online'] + ' offline: ' + course_data['Offline'] + ' face to face: ' +
+              course_data['Face_to_Face'] + ' blended: ' + course_data['Blended'] + ' distance: ' +
+              course_data['Distance'])
+
+
 
 
