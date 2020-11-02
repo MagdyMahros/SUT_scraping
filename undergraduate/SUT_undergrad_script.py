@@ -103,3 +103,45 @@ for each_url in course_links_file:
             description_list = ' '.join(description_list)
             course_data['Description'] = description_list
             print('COURSE DESCRIPTION: ', description_list)
+
+    # COURSE LANGUAGE
+    for language in possible_languages:
+        if language in course_data['Course']:
+            course_data['Course_Lang'] = language
+        else:
+            course_data['Course_Lang'] = 'English'
+    print('COURSE LANGUAGE: ', course_data['Course_Lang'])
+
+    # DURATION & DURATION_TIME / PART-TIME & FULL-TIME
+    list_of_course_info_tags = soup.find_all('div', class_='course-info l-span-3')
+    if list_of_course_info_tags:
+        for index, duration_container in enumerate(list_of_course_info_tags):
+            if index == 1:
+                duration_tag = duration_container.find('h3')
+                if duration_tag:
+                    duration = duration_tag.find_next_sibling('p')
+                    if duration:
+                        part_full_time = duration.find_next_sibling('p')
+                        if part_full_time:
+                            if 'full-time' in part_full_time.get_text().lower().strip():
+                                course_data['Full_Time'] = 'yes'
+                            else:
+                                course_data['Full_Time'] = 'no'
+                            if 'part-time' in part_full_time.get_text().lower().strip():
+                                course_data['Part_Time'] = 'yes'
+                            else:
+                                course_data['Part_Time'] = 'no'
+                            print('FULL-TIME/PART-TIME: ',  course_data['Full_Time'] + ' / ' + course_data['Part_Time'])
+                        converted_duration = dura.convert_duration(duration.get_text().strip())
+                        if converted_duration is not None:
+                            duration_list = list(converted_duration)
+                            if duration_list[0] == 1 and 'Years' in duration_list[1]:
+                                duration_list[1] = 'Year'
+                            elif duration_list[0] == 1 and 'Months' in duration_list[1]:
+                                duration_list[1] = 'Month'
+                            course_data['Duration'] = duration_list[0]
+                            course_data['Duration_Time'] = duration_list[1]
+                            print('DURATION/DURATION-TIME', str(course_data['Duration']) + ' / ' + course_data['Duration_Time'])
+
+
+
