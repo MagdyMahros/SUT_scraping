@@ -180,6 +180,33 @@ for each_url in course_links_file:
         course_data['Availability'] = 'A'
     print('AVAILABILITY: ' + course_data['Availability'])
 
+    # CAREER OUTCOMES
+    career_title = soup.find('h3', text=re.compile('Career opportunities', re.IGNORECASE))
+    if career_title:
+        career_list = []
+        career_div = career_title.find_next('div', id='cs-aims-objectives')
+        if career_div:
+            career_row = career_div.find('div', class_='row')
+            if career_row:
+                career_st_column = career_row.find('div', class_='l-two-column')
+                career_nd_column = career_row.find('div', class_='l-two-column l-two-column--last')
+                if career_st_column:
+                    career_ul = career_st_column.find('ul')
+                    if career_ul:
+                        career_li = career_ul.find_all('li')
+                        for li in career_li:
+                            career_list.append(li.get_text().strip())
+                if career_nd_column:
+                    career_ul = career_nd_column.find('ul')
+                    if career_ul:
+                        career_li = career_ul.find_all('li')
+                        for li in career_li:
+                            career_list.append(li.get_text().strip())
+                career_list = ' '.join(career_list)
+                course_data['Career_Outcomes'] = career_list
+                print('CAREER OUTCOMES: ', course_data['Career_Outcomes'])
+
+
 
 
 
