@@ -223,4 +223,20 @@ for each_url in course_links_file:
         actual_cities.append('online')
     print('CITY: ', actual_cities)
 
+    # PREREQUISITE
+    atar_title = soup.find('h4', text=re.compile('Entry requirements', re.IGNORECASE))
+    if atar_title:
+        atar_tag = atar_title.find_next_sibling('div', class_='with-margins general-content')
+        if atar_tag:
+            atar_p = atar_tag.find('p')
+            if atar_p:
+                atar = atar_p.find('strong')
+                if atar:
+                    atar_text = atar.get_text().strip()
+                    if 'RC' in atar_text:
+                        remarks_list.append('ATAR is not published yet')
+                    course_data['Prerequisite_1'] = 'year 12'
+                    course_data['Prerequisite_1_grade'] = atar_text
+                    print('ATAR: ', course_data['Prerequisite_1_grade'])
+
 
