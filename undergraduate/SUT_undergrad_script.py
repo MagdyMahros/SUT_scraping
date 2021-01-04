@@ -5,7 +5,8 @@
     * date: 02-11-20
     * description:This script extracts the corresponding undergraduate courses details and tabulate it.
 """
-
+import os
+import copy
 import csv
 import re
 import time
@@ -15,11 +16,10 @@ import bs4 as bs4
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-import os
-import copy
 from CustomMethods import TemplateData
 from CustomMethods import DurationConverter as dura
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException, NoSuchElementException, \
+    StaleElementReferenceException, JavascriptException, ElementClickInterceptedException
 
 option = webdriver.ChromeOptions()
 option.add_argument(" - incognito")
@@ -43,7 +43,47 @@ course_data = {'Level_Code': '', 'University': 'Swinburne University of Technolo
                'Prerequisite_2': 'IELTS', 'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prerequisite_2_grade': '6.0',
                'Prerequisite_3_grade': '', 'Website': '', 'Course_Lang': '', 'Availability': '', 'Description': '',
                'Career_Outcomes': '', 'Online': '', 'Offline': '', 'Distance': '', 'Face_to_Face': '',
-               'Blended': '', 'Remarks': ''}
+               'Blended': '', 'Remarks': '', 'Subject_or_Unit_1': '',
+               'Subject_Objective_1': '', 'Subject_Description_1': '',
+               'Subject_or_Unit_2': '', 'Subject_Objective_2': '', 'Subject_Description_2': '',
+               'Subject_or_Unit_3': '', 'Subject_Objective_3': '', 'Subject_Description_3': '',
+               'Subject_or_Unit_4': '', 'Subject_Objective_4': '', 'Subject_Description_4': '',
+               'Subject_or_Unit_5': '', 'Subject_Objective_5': '', 'Subject_Description_5': '',
+               'Subject_or_Unit_6': '', 'Subject_Objective_6': '', 'Subject_Description_6': '',
+               'Subject_or_Unit_7': '', 'Subject_Objective_7': '', 'Subject_Description_7': '',
+               'Subject_or_Unit_8': '', 'Subject_Objective_8': '', 'Subject_Description_8': '',
+               'Subject_or_Unit_9': '', 'Subject_Objective_9': '', 'Subject_Description_9': '',
+               'Subject_or_Unit_10': '', 'Subject_Objective_10': '', 'Subject_Description_10': '',
+               'Subject_or_Unit_11': '', 'Subject_Objective_11': '', 'Subject_Description_11': '',
+               'Subject_or_Unit_12': '', 'Subject_Objective_12': '', 'Subject_Description_12': '',
+               'Subject_or_Unit_13': '', 'Subject_Objective_13': '', 'Subject_Description_13': '',
+               'Subject_or_Unit_14': '', 'Subject_Objective_14': '', 'Subject_Description_14': '',
+               'Subject_or_Unit_15': '', 'Subject_Objective_15': '', 'Subject_Description_15': '',
+               'Subject_or_Unit_16': '', 'Subject_Objective_16': '', 'Subject_Description_16': '',
+               'Subject_or_Unit_17': '', 'Subject_Objective_17': '', 'Subject_Description_17': '',
+               'Subject_or_Unit_18': '', 'Subject_Objective_18': '', 'Subject_Description_18': '',
+               'Subject_or_Unit_19': '', 'Subject_Objective_19': '', 'Subject_Description_19': '',
+               'Subject_or_Unit_20': '', 'Subject_Objective_20': '', 'Subject_Description_20': '',
+               'Subject_or_Unit_21': '', 'Subject_Objective_21': '', 'Subject_Description_21': '',
+               'Subject_or_Unit_22': '', 'Subject_Objective_22': '', 'Subject_Description_22': '',
+               'Subject_or_Unit_23': '', 'Subject_Objective_23': '', 'Subject_Description_23': '',
+               'Subject_or_Unit_24': '', 'Subject_Objective_24': '', 'Subject_Description_24': '',
+               'Subject_or_Unit_25': '', 'Subject_Objective_25': '', 'Subject_Description_25': '',
+               'Subject_or_Unit_26': '', 'Subject_Objective_26': '', 'Subject_Description_26': '',
+               'Subject_or_Unit_27': '', 'Subject_Objective_27': '', 'Subject_Description_27': '',
+               'Subject_or_Unit_28': '', 'Subject_Objective_28': '', 'Subject_Description_28': '',
+               'Subject_or_Unit_29': '', 'Subject_Objective_29': '', 'Subject_Description_29': '',
+               'Subject_or_Unit_30': '', 'Subject_Objective_30': '', 'Subject_Description_30': '',
+               'Subject_or_Unit_31': '', 'Subject_Objective_31': '', 'Subject_Description_31': '',
+               'Subject_or_Unit_32': '', 'Subject_Objective_32': '', 'Subject_Description_32': '',
+               'Subject_or_Unit_33': '', 'Subject_Objective_33': '', 'Subject_Description_33': '',
+               'Subject_or_Unit_34': '', 'Subject_Objective_34': '', 'Subject_Description_34': '',
+               'Subject_or_Unit_35': '', 'Subject_Objective_35': '', 'Subject_Description_35': '',
+               'Subject_or_Unit_36': '', 'Subject_Objective_36': '', 'Subject_Description_36': '',
+               'Subject_or_Unit_37': '', 'Subject_Objective_37': '', 'Subject_Description_37': '',
+               'Subject_or_Unit_38': '', 'Subject_Objective_38': '', 'Subject_Description_38': '',
+               'Subject_or_Unit_39': '', 'Subject_Objective_39': '', 'Subject_Description_39': '',
+               'Subject_or_Unit_40': '', 'Subject_Objective_40': '', 'Subject_Description_40': ''}
 
 possible_cities = {'rockhampton': 'Rockhampton', 'cairns': 'Cairns', 'bundaberg': 'Bundaberg', 'townsville': 'Townsville',
                    'online': 'Online', 'gladstone': 'Gladstone', 'mackay': 'Mackay', 'mixed': 'Online', 'yeppoon': 'Yeppoon',
@@ -283,6 +323,50 @@ for each_url in course_links_file:
     course_data['Remarks'] = remarks_list
     del remarks_list
 
+    # UNITES
+    subjects_link = []
+    try:
+        THE_XPATH = '//*[@id="course-structure-diagram"]/div[1]/div[2]/div/table/descendant::tbody/descendant::a'
+        units_list = browser.find_elements_by_xpath(f"{THE_XPATH}")
+        for i, a in enumerate(units_list):
+            if i < 10:
+                link = a.get_attribute('href')
+                subjects_link.append(link)
+            if len(subjects_link) == 10:
+                break
+        # print('links list: ', subjects_link)
+        i = 1
+        for s in subjects_link:
+            browser.get(s)
+            # subject name
+            try:
+                THE_XPATH = '//*[@id="content"]/main/section[1]/header/div/h1'
+                WebDriverWait(browser, 3).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, f'{THE_XPATH}'))
+                )
+                value = browser.find_element_by_xpath(f'{THE_XPATH}').text
+                print('UNIT NAME: ', value)
+                course_data[f'Subject_or_Unit_{i}'] = value
+            except(AttributeError, TimeoutException, NoSuchElementException, ElementNotInteractableException) as e:
+                print(f'cant extract subject name {i}')
+
+            # subject objective
+            try:
+                THE_XPATH = "//h3[contains(text(), 'Aims and objectives')]/following-sibling::div[@class='with-margins general-content']"
+                WebDriverWait(browser, 3).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, f'{THE_XPATH}'))
+                )
+                value = browser.find_element_by_xpath(f'{THE_XPATH}').text
+                print('UNIT OBJECTIVES: ', value)
+                course_data[f'Subject_Objective_{i}'] = value
+            except(AttributeError, TimeoutException, NoSuchElementException, ElementNotInteractableException) as e:
+                print(f'cant extract subject objective {i}')
+            i += 1
+    except (AttributeError, TimeoutException, NoSuchElementException, ElementNotInteractableException) as e:
+        print(f'something went wrong here:  {e}')
+
     # duplicating entries with multiple cities for each city
     for i in actual_cities:
         course_data['City'] = possible_cities[i]
@@ -295,7 +379,47 @@ for each_url in course_links_file:
                           'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',
                           'Prerequisite_2_grade', 'Prerequisite_3_grade', 'Website', 'Course_Lang', 'Availability',
                           'Description', 'Career_Outcomes', 'Country', 'Online', 'Offline', 'Distance', 'Face_to_Face',
-                          'Blended', 'Remarks']
+                          'Blended', 'Remarks', 'Subject_or_Unit_1', 'Subject_Objective_1',
+                          'Subject_Description_1',
+                          'Subject_or_Unit_2', 'Subject_Objective_2', 'Subject_Description_2',
+                          'Subject_or_Unit_3', 'Subject_Objective_3', 'Subject_Description_3',
+                          'Subject_or_Unit_4', 'Subject_Objective_4', 'Subject_Description_4',
+                          'Subject_or_Unit_5', 'Subject_Objective_5', 'Subject_Description_5',
+                          'Subject_or_Unit_6', 'Subject_Objective_6', 'Subject_Description_6',
+                          'Subject_or_Unit_7', 'Subject_Objective_7', 'Subject_Description_7',
+                          'Subject_or_Unit_8', 'Subject_Objective_8', 'Subject_Description_8',
+                          'Subject_or_Unit_9', 'Subject_Objective_9', 'Subject_Description_9',
+                          'Subject_or_Unit_10', 'Subject_Objective_10', 'Subject_Description_10',
+                          'Subject_or_Unit_11', 'Subject_Objective_11', 'Subject_Description_11',
+                          'Subject_or_Unit_12', 'Subject_Objective_12', 'Subject_Description_12',
+                          'Subject_or_Unit_13', 'Subject_Objective_13', 'Subject_Description_13',
+                          'Subject_or_Unit_14', 'Subject_Objective_14', 'Subject_Description_14',
+                          'Subject_or_Unit_15', 'Subject_Objective_15', 'Subject_Description_15',
+                          'Subject_or_Unit_16', 'Subject_Objective_16', 'Subject_Description_16',
+                          'Subject_or_Unit_17', 'Subject_Objective_17', 'Subject_Description_17',
+                          'Subject_or_Unit_18', 'Subject_Objective_18', 'Subject_Description_18',
+                          'Subject_or_Unit_19', 'Subject_Objective_19', 'Subject_Description_19',
+                          'Subject_or_Unit_20', 'Subject_Objective_20', 'Subject_Description_20',
+                          'Subject_or_Unit_21', 'Subject_Objective_21', 'Subject_Description_21',
+                          'Subject_or_Unit_22', 'Subject_Objective_22', 'Subject_Description_22',
+                          'Subject_or_Unit_23', 'Subject_Objective_23', 'Subject_Description_23',
+                          'Subject_or_Unit_24', 'Subject_Objective_24', 'Subject_Description_24',
+                          'Subject_or_Unit_25', 'Subject_Objective_25', 'Subject_Description_25',
+                          'Subject_or_Unit_26', 'Subject_Objective_26', 'Subject_Description_26',
+                          'Subject_or_Unit_27', 'Subject_Objective_27', 'Subject_Description_27',
+                          'Subject_or_Unit_28', 'Subject_Objective_28', 'Subject_Description_28',
+                          'Subject_or_Unit_29', 'Subject_Objective_29', 'Subject_Description_29',
+                          'Subject_or_Unit_30', 'Subject_Objective_30', 'Subject_Description_30',
+                          'Subject_or_Unit_31', 'Subject_Objective_31', 'Subject_Description_31',
+                          'Subject_or_Unit_32', 'Subject_Objective_32', 'Subject_Description_32',
+                          'Subject_or_Unit_33', 'Subject_Objective_33', 'Subject_Description_33',
+                          'Subject_or_Unit_34', 'Subject_Objective_34', 'Subject_Description_34',
+                          'Subject_or_Unit_35', 'Subject_Objective_35', 'Subject_Description_35',
+                          'Subject_or_Unit_36', 'Subject_Objective_36', 'Subject_Description_36',
+                          'Subject_or_Unit_37', 'Subject_Objective_37', 'Subject_Description_37',
+                          'Subject_or_Unit_38', 'Subject_Objective_38', 'Subject_Description_38',
+                          'Subject_or_Unit_39', 'Subject_Objective_39', 'Subject_Description_39',
+                          'Subject_or_Unit_40', 'Subject_Objective_40', 'Subject_Description_40']
 
     course_dict_keys = set().union(*(d.keys() for d in course_data_all))
 
